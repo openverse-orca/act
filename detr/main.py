@@ -67,12 +67,12 @@ def get_args_parser():
     return parser
 
 
-def build_ACT_model_and_optimizer(args_override):
-    parser = argparse.ArgumentParser('DETR training and evaluation script', parents=[get_args_parser()])
-    args = parser.parse_args()
+def build_ACT_model_and_optimizer(args):
+    # parser = argparse.ArgumentParser('DETR training and evaluation script', parents=[get_args_parser()])
+    # args = parser.parse_args()
 
-    for k, v in args_override.items():
-        setattr(args, k, v)
+    # for k, v in args_override.items():
+    #     setattr(args, k, v)
 
     model = build_ACT_model(args)
     model.cuda()
@@ -81,11 +81,11 @@ def build_ACT_model_and_optimizer(args_override):
         {"params": [p for n, p in model.named_parameters() if "backbone" not in n and p.requires_grad]},
         {
             "params": [p for n, p in model.named_parameters() if "backbone" in n and p.requires_grad],
-            "lr": args.lr_backbone,
+            "lr": args['lr_backbone'],
         },
     ]
-    optimizer = torch.optim.AdamW(param_dicts, lr=args.lr,
-                                  weight_decay=args.weight_decay)
+    optimizer = torch.optim.AdamW(param_dicts, lr=args['lr'],
+                                  weight_decay=args['weight_decay'])
 
     return model, optimizer
 
@@ -111,4 +111,31 @@ def build_CNNMLP_model_and_optimizer(args_override):
                                   weight_decay=args.weight_decay)
 
     return model, optimizer
+
+
+def save_complete_model(model, optimizer, args, save_path):
+    """Save the complete model state including architecture parameters"""
+    complete_state = {
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'model_args': args,  # Save all architecture parameters
+    }
+    torch.save(complete_state, save_path)
+
+def load_complete_model(save_path, device='cuda'):
+    """Load the complete model including architecture parameters"""
+    complete_state = torch.load(save_path, map_location=device)
+    
+    # Reconstruct model with saved arguments
+    model_args = complete_state['model_args']
+    if isinstance(model_args, dict):
+        model, optimizer = build_ACT_model_and_optimizer(model_args)
+    else:
+        model, optimizer = build_ACT_model_and_optimizer(vars(model_args))
+    
+    # Load the saved states
+    model.load_state_dict(complete_state['model_state_dict'])
+    optimizer.load_state_dict(complete_state['optimizer_state_dict'])
+    
+    return model, optimizer, model_args
 

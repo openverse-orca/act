@@ -27,8 +27,8 @@ You can find all scripted/human demo for simulated environments [here](https://d
 
 ### Installation
 
-    conda create -n aloha python=3.8.10
-    conda activate aloha
+    conda create -n aloha_orca2 python=3.8.10
+    conda activate aloha_orca2
     pip install torchvision
     pip install torch
     pip install pyquaternion
@@ -71,10 +71,10 @@ To train ACT:
     
     # Transfer Cube task
     python3 imitate_episodes.py \
-    --task_name sim_transfer_cube_scripted \
-    --ckpt_dir <ckpt dir> \
-    --policy_class ACT --kl_weight 10 --chunk_size 100 --hidden_dim 512 --batch_size 8 --dim_feedforward 3200 \
-    --num_epochs 2000  --lr 1e-5 \
+    --task_name sim_frankapickup \
+    --ckpt_dir ../checkpoints \
+    --policy_class ACT --kl_weight 0.2 --chunk_size 25 --hidden_dim 512 --batch_size 16 --dim_feedforward 1600 \
+    --num_epochs 800  --lr 1e-4 \
     --seed 0
 
 
@@ -86,4 +86,16 @@ You can also add ``--onscreen_render`` to see real-time rendering during evaluat
 
 For real-world data where things can be harder to model, train for at least 5000 epochs or 3-4 times the length after the loss has plateaued.
 Please refer to [tuning tips](https://docs.google.com/document/d/1FVIZfoALXg_ZkYKaYVh-qOlaXveq5CtvJHXkY25eYhs/edit?usp=sharing) for more info.
+
+
+# How to train Franka using orcagym and act?
+1. do teleoperation as usual, get the data
+2. convert the data into the format that act codebase recognize
+```
+python scripts/covert.py
+```
+3. run training as usual using act
+4. To do inference, a folder named other_envs and use_act flag are added to adapt the act codebase to orcagym rollout.
+Before inference, you should train a tiny model using orcagym because some env config are contained there.
+Then run inference as usual using orcagym (the model file you specified won't be used if use_act enabled) and enable use_act flag.
 

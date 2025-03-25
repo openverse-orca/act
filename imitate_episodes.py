@@ -47,25 +47,36 @@ def main(args):
     camera_names = task_config['camera_names']
 
     # fixed parameters
-    state_dim = 14
+    state_dim = 12  # 14 for original task
+    action_dim = 8  # 14 for original task
     lr_backbone = 1e-5
     backbone = 'resnet18'
     if policy_class == 'ACT':
         enc_layers = 4
         dec_layers = 7
         nheads = 8
-        policy_config = {'lr': args['lr'],
-                         'num_queries': args['chunk_size'],
-                         'kl_weight': args['kl_weight'],
-                         'hidden_dim': args['hidden_dim'],
-                         'dim_feedforward': args['dim_feedforward'],
-                         'lr_backbone': lr_backbone,
-                         'backbone': backbone,
-                         'enc_layers': enc_layers,
-                         'dec_layers': dec_layers,
-                         'nheads': nheads,
-                         'camera_names': camera_names,
-                         }
+        policy_config = {
+                            'lr': args['lr'],
+                            'num_queries': args['chunk_size'],
+                            'kl_weight': args['kl_weight'],
+                            'hidden_dim': args['hidden_dim'],
+                            'dim_feedforward': args['dim_feedforward'],
+                            'lr_backbone': lr_backbone,
+                            'backbone': backbone,
+                            'enc_layers': enc_layers,
+                            'dec_layers': dec_layers,
+                            'nheads': nheads,
+                            'camera_names': camera_names,
+                            'state_dim': state_dim,
+                            'action_dim': action_dim,
+                            
+                            'position_embedding': 'sine',
+                            'masks': False,
+                            'dilation': False,
+                            'dropout': 0.1,
+                            'pre_norm': False,
+                            'weight_decay': 1e-4,
+                        }
     elif policy_class == 'CNNMLP':
         policy_config = {'lr': args['lr'], 'lr_backbone': lr_backbone, 'backbone' : backbone, 'num_queries': 1,
                          'camera_names': camera_names,}
@@ -87,8 +98,11 @@ def main(args):
         'camera_names': camera_names,
         'real_robot': not is_sim
     }
-
     if is_eval:
+        # load config
+        config_path = os.path.join("/home/yao/Desktop/Tasks/0322_frankapickup/act_orca_v2/checkpoints", f'config.pkl')
+        with open(config_path, 'rb') as f:
+            config = pickle.load(f)
         ckpt_names = [f'policy_best.ckpt']
         results = []
         for ckpt_name in ckpt_names:
@@ -393,6 +407,11 @@ def train_bc(train_dataloader, val_dataloader, config):
     # save training curves
     plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed)
 
+    # save config
+    config_path = os.path.join(ckpt_dir, f'config.pkl')
+    with open(config_path, 'wb') as f:
+        pickle.dump(config, f)
+
     return best_ckpt_info
 
 
@@ -426,7 +445,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', action='store', type=float, help='lr', required=True)
 
     # for ACT
-    parser.add_argument('--kl_weight', action='store', type=int, help='KL Weight', required=False)
+    parser.add_argument('--kl_weight', action='store', type=float, help='KL Weight', required=False)
     parser.add_argument('--chunk_size', action='store', type=int, help='chunk_size', required=False)
     parser.add_argument('--hidden_dim', action='store', type=int, help='hidden_dim', required=False)
     parser.add_argument('--dim_feedforward', action='store', type=int, help='dim_feedforward', required=False)

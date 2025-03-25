@@ -1,8 +1,15 @@
 import pathlib
 
 ### Task parameters
-DATA_DIR = '<put your data dir here>'
+DATA_DIR = '/home/yao/Desktop/Tasks/0322_frankapickup/act_orca_v2/datasets'
 SIM_TASK_CONFIGS = {
+    'sim_frankapickup':{
+        'dataset_dir': DATA_DIR + '/sim_frankapickup',
+        'num_episodes': 29,
+        'episode_len': 84,
+        'camera_names': ['camera_primary', 'camera_wrist']
+    },
+    
     'sim_transfer_cube_scripted':{
         'dataset_dir': DATA_DIR + '/sim_transfer_cube_scripted',
         'num_episodes': 50,

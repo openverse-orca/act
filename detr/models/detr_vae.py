@@ -33,12 +33,13 @@ def get_sinusoid_encoding_table(n_position, d_hid):
 
 class DETRVAE(nn.Module):
     """ This is the DETR module that performs object detection """
-    def __init__(self, backbones, transformer, encoder, state_dim, num_queries, camera_names):
+    def __init__(self, backbones, transformer, encoder, state_dim, action_dim, num_queries, camera_names):
         """ Initializes the model.
         Parameters:
             backbones: torch module of the backbone to be used. See backbone.py
             transformer: torch module of the transformer architecture. See transformer.py
             state_dim: robot state dimension of the environment
+            action_dim: action dimension of the environment
             num_queries: number of object queries, ie detection slot. This is the maximal number of objects
                          DETR can detect in a single image. For COCO, we recommend 100 queries.
             aux_loss: True if auxiliary decoding losses (loss at each decoder layer) are to be used.
@@ -49,25 +50,26 @@ class DETRVAE(nn.Module):
         self.transformer = transformer
         self.encoder = encoder
         hidden_dim = transformer.d_model
-        self.action_head = nn.Linear(hidden_dim, state_dim)
+        self.action_head = nn.Linear(hidden_dim, action_dim)
         self.is_pad_head = nn.Linear(hidden_dim, 1)
         self.query_embed = nn.Embedding(num_queries, hidden_dim)
         if backbones is not None:
             self.input_proj = nn.Conv2d(backbones[0].num_channels, hidden_dim, kernel_size=1)
             self.backbones = nn.ModuleList(backbones)
-            self.input_proj_robot_state = nn.Linear(14, hidden_dim)
+            self.input_proj_robot_state = nn.Linear(state_dim, hidden_dim)
         else:
-            # input_dim = 14 + 7 # robot_state + env_state
-            self.input_proj_robot_state = nn.Linear(14, hidden_dim)
-            self.input_proj_env_state = nn.Linear(7, hidden_dim)
-            self.pos = torch.nn.Embedding(2, hidden_dim)
-            self.backbones = None
+            # # input_dim = 14 + 7 # robot_state + env_state
+            # self.input_proj_robot_state = nn.Linear(14, hidden_dim)
+            # self.input_proj_env_state = nn.Linear(7, hidden_dim)
+            # self.pos = torch.nn.Embedding(2, hidden_dim)
+            # self.backbones = None
+            raise NotImplementedError
 
         # encoder extra parameters
         self.latent_dim = 32 # final size of latent z # TODO tune
         self.cls_embed = nn.Embedding(1, hidden_dim) # extra cls token embedding
-        self.encoder_action_proj = nn.Linear(14, hidden_dim) # project action to embedding
-        self.encoder_joint_proj = nn.Linear(14, hidden_dim)  # project qpos to embedding
+        self.encoder_action_proj = nn.Linear(action_dim, hidden_dim) # project action to embedding
+        self.encoder_joint_proj = nn.Linear(state_dim, hidden_dim)  # project qpos to embedding
         self.latent_proj = nn.Linear(hidden_dim, self.latent_dim*2) # project hidden state to latent std, var
         self.register_buffer('pos_table', get_sinusoid_encoding_table(1+1+num_queries, hidden_dim)) # [CLS], qpos, a_seq
 
@@ -136,6 +138,10 @@ class DETRVAE(nn.Module):
             hs = self.transformer(transformer_input, None, self.query_embed.weight, self.pos.weight)[0]
         a_hat = self.action_head(hs)
         is_pad_hat = self.is_pad_head(hs)
+
+        ## added for Franka, yaoxiang ##
+        # a_hat = torch.tanh(a_hat)
+        ## end # 
         return a_hat, is_pad_hat, [mu, logvar]
 
 
@@ -210,12 +216,12 @@ def mlp(input_dim, hidden_dim, output_dim, hidden_depth):
 
 
 def build_encoder(args):
-    d_model = args.hidden_dim # 256
-    dropout = args.dropout # 0.1
-    nhead = args.nheads # 8
-    dim_feedforward = args.dim_feedforward # 2048
-    num_encoder_layers = args.enc_layers # 4 # TODO shared with VAE decoder
-    normalize_before = args.pre_norm # False
+    d_model = args['hidden_dim'] # 256
+    dropout = args['dropout'] # 0.1
+    nhead = args['nheads'] # 8
+    dim_feedforward = args['dim_feedforward'] # 2048
+    num_encoder_layers = args['enc_layers'] # 4 # TODO shared with VAE decoder
+    normalize_before = args['pre_norm'] # False
     activation = "relu"
 
     encoder_layer = TransformerEncoderLayer(d_model, nhead, dim_feedforward,
@@ -227,7 +233,6 @@ def build_encoder(args):
 
 
 def build(args):
-    state_dim = 14 # TODO hardcode
 
     # From state
     # backbone = None # from state for now, no need for conv nets
@@ -244,9 +249,10 @@ def build(args):
         backbones,
         transformer,
         encoder,
-        state_dim=state_dim,
-        num_queries=args.num_queries,
-        camera_names=args.camera_names,
+        state_dim=args['state_dim'],
+        action_dim=args['action_dim'],
+        num_queries=args['num_queries'],
+        camera_names=args['camera_names'],
     )
 
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
