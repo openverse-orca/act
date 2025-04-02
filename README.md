@@ -1,16 +1,16 @@
 # How to use ACT with Orcagym
-Step 1:
+## Step 1:
 - Arrange your repo like this:
     - anyname
         - act (this repo)
         - checkpoints
         - datasets
             - sim_frankapickup
-Step 2:
+## Step 2:
 - do your franka teleoperation like normal in orcagym
 - convert teleoperation franka data from orcagym format to the format that this repo recognize
     - use scripts/convert.py (use your own path1 variable)
-Step 3:
+## Step 3:
 - Run training like you would in ACT repo
     - I would run this command
         python3 imitate_episodes.py \
@@ -19,7 +19,7 @@ Step 3:
         --policy_class ACT --kl_weight 0.1 --chunk_size 50 --hidden_dim 512 --batch_size 16 --dim_feedforward 1600 \
         --num_epochs 2000  --lr 1e-4 \
         --seed 0
-Step 4 Inference:
+## Step 4 Inference:
 - Inference is harder, act/other_envs/franka/policy.py is for interence
 - You should copy and cover {your path}/OrcaGym/examples/imitation/run_franka_single_arm.py and {your path}/OrcaGym/3rd_party/robomimic/robomimic/utils/train_utils.py with act/other_envs/code_for_orcagym/run_franka_single_arm.py and act/other_envs/code_for_orcagym/train_utils.py
 - Then run inference in orcagym repo with use_act flag enabled, but remember to include --model_file flag in it too. You should run a training with the same data in orcagym and use the output modelfile. This is for env metainfo.
