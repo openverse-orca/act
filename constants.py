@@ -1,7 +1,7 @@
 import pathlib
 
 ### Task parameters
-DATA_DIR = '/home/yao/Desktop/Tasks/0322_frankapickup/act_orca_v2/datasets'
+DATA_DIR = '../datasets'
 SIM_TASK_CONFIGS = {
     'sim_frankapickup':{
         'dataset_dir': DATA_DIR + '/sim_frankapickup',
