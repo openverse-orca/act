@@ -1,7 +1,7 @@
 import torch.nn as nn
 from torch.nn import functional as F
 import torchvision.transforms as transforms
-
+import torch
 from detr.main import build_ACT_model_and_optimizer, build_CNNMLP_model_and_optimizer
 import IPython
 e = IPython.embed
@@ -9,6 +9,7 @@ e = IPython.embed
 class ACTPolicy(nn.Module):
     def __init__(self, args_override):
         super().__init__()
+        self.args_override = args_override  # Store the args
         model, optimizer = build_ACT_model_and_optimizer(args_override)
         self.model = model # CVAE decoder
         self.optimizer = optimizer
@@ -17,8 +18,14 @@ class ACTPolicy(nn.Module):
 
     def __call__(self, qpos, image, actions=None, is_pad=None):
         env_state = None
-        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                         std=[0.229, 0.224, 0.225])
+        if image.shape[2] == 3:
+            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                            std=[0.229, 0.224, 0.225])
+        elif image.shape[2] == 6:
+            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.485, 0.456, 0.406],
+                                            std=[0.229, 0.224, 0.225, 0.229, 0.224, 0.225])
+        else:
+            raise ValueError(f"Image shape {image.shape} not supported")
         image = normalize(image)
         if actions is not None: # training time
             actions = actions[:, :self.model.num_queries]
@@ -40,6 +47,20 @@ class ACTPolicy(nn.Module):
     def configure_optimizers(self):
         return self.optimizer
 
+    def save(self, save_path):
+        """Save the complete policy including model architecture"""
+        from detr.main import save_complete_model
+        save_complete_model(self.model, self.optimizer, self.args_override, save_path)
+
+    @classmethod
+    def load(cls, save_path, device='cuda'):
+        """Load a complete policy including model architecture"""
+        from detr.main import load_complete_model
+        model, optimizer, args = load_complete_model(save_path, device)
+        policy = cls(args)
+        policy.model = model
+        policy.optimizer = optimizer
+        return policy
 
 class CNNMLPPolicy(nn.Module):
     def __init__(self, args_override):

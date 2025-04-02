@@ -1,8 +1,16 @@
 import pathlib
 
 ### Task parameters
-DATA_DIR = '<put your data dir here>'
+DATA_DIR = '../datasets'
 SIM_TASK_CONFIGS = {
+    'sim_frankapickup':{
+        'dataset_dir': DATA_DIR + '/sim_frankapickup',
+        'num_episodes':250,
+        'episode_len': 100,
+        # 'camera_names': ['camera_primary', 'camera_wrist']
+        'camera_names': ['camera_primary']
+    },
+    
     'sim_transfer_cube_scripted':{
         'dataset_dir': DATA_DIR + '/sim_transfer_cube_scripted',
         'num_episodes': 50,

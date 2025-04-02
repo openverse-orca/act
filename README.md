@@ -1,3 +1,30 @@
+# How to use ACT with Orcagym
+Step 1:
+- Arrange your repo like this:
+    - anyname
+        - act (this repo)
+        - checkpoints
+        - datasets
+            - sim_frankapickup
+Step 2:
+- do your franka teleoperation like normal in orcagym
+- convert teleoperation franka data from orcagym format to the format that this repo recognize
+    - use scripts/convert.py (use your own path1 variable)
+Step 3:
+- Run training like you would in ACT repo
+    - I would run this command
+        python3 imitate_episodes.py \
+        --task_name sim_frankapickup \
+        --ckpt_dir ../checkpoints \
+        --policy_class ACT --kl_weight 0.1 --chunk_size 50 --hidden_dim 512 --batch_size 16 --dim_feedforward 1600 \
+        --num_epochs 2000  --lr 1e-4 \
+        --seed 0
+Step 4 Inference:
+- Inference is harder, act/other_envs/franka/policy.py is for interence
+- You should copy and cover {your path}/OrcaGym/examples/imitation/run_franka_single_arm.py and {your path}/OrcaGym/3rd_party/robomimic/robomimic/utils/train_utils.py with act/other_envs/code_for_orcagym/run_franka_single_arm.py and act/other_envs/code_for_orcagym/train_utils.py
+- Then run inference in orcagym repo with use_act flag enabled, but remember to include --model_file flag in it too. You should run a training with the same data in orcagym and use the output modelfile. This is for env metainfo.
+
+
 # ACT: Action Chunking with Transformers
 
 ### *New*: [ACT tuning tips](https://docs.google.com/document/d/1FVIZfoALXg_ZkYKaYVh-qOlaXveq5CtvJHXkY25eYhs/edit?usp=sharing)
@@ -27,8 +54,8 @@ You can find all scripted/human demo for simulated environments [here](https://d
 
 ### Installation
 
-    conda create -n aloha python=3.8.10
-    conda activate aloha
+    conda create -n aloha_orca2 python=3.8.10
+    conda activate aloha_orca2
     pip install torchvision
     pip install torch
     pip install pyquaternion
@@ -52,10 +79,12 @@ To set up a new terminal, run:
     conda activate aloha
     cd <path to act repo>
 
-### Simulated experiments
-
-We use ``sim_transfer_cube_scripted`` task in the examples below. Another option is ``sim_insertion_scripted``.
-To generated 50 episodes of scripted data, run:
+### Simulated experiments    python3 imitate_episodes.py \
+    --task_name sim_frankapickup \
+    --ckpt_dir ../checkpoints \
+    --policy_class ACT --kl_weight 0.1 --chunk_size 50 --hidden_dim 512 --batch_size 16 --dim_feedforward 1600 \
+    --num_epochs 2000  --lr 1e-4 \
+    --seed 0 run:
 
     python3 record_sim_episodes.py \
     --task_name sim_transfer_cube_scripted \
@@ -71,10 +100,10 @@ To train ACT:
     
     # Transfer Cube task
     python3 imitate_episodes.py \
-    --task_name sim_transfer_cube_scripted \
-    --ckpt_dir <ckpt dir> \
-    --policy_class ACT --kl_weight 10 --chunk_size 100 --hidden_dim 512 --batch_size 8 --dim_feedforward 3200 \
-    --num_epochs 2000  --lr 1e-5 \
+    --task_name sim_frankapickup \
+    --ckpt_dir ../checkpoints \
+    --policy_class ACT --kl_weight 0.1 --chunk_size 10 --hidden_dim 512 --batch_size 16 --dim_feedforward 1600 \
+    --num_epochs 2000  --lr 1e-4 \
     --seed 0
 
 
