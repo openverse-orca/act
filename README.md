@@ -7,6 +7,7 @@ Step 1:
         - datasets
             - sim_frankapickup
 Step 2:
+- do your franka teleoperation like normal in orcagym
 - convert teleoperation franka data from orcagym format to the format that this repo recognize
     - use scripts/convert.py (use your own path1 variable)
 Step 3:
@@ -101,7 +102,7 @@ To train ACT:
     python3 imitate_episodes.py \
     --task_name sim_frankapickup \
     --ckpt_dir ../checkpoints \
-    --policy_class ACT --kl_weight 0.1 --chunk_size 50 --hidden_dim 512 --batch_size 16 --dim_feedforward 1600 \
+    --policy_class ACT --kl_weight 0.1 --chunk_size 10 --hidden_dim 512 --batch_size 16 --dim_feedforward 1600 \
     --num_epochs 2000  --lr 1e-4 \
     --seed 0
 
@@ -114,17 +115,4 @@ You can also add ``--onscreen_render`` to see real-time rendering during evaluat
 
 For real-world data where things can be harder to model, train for at least 5000 epochs or 3-4 times the length after the loss has plateaued.
 Please refer to [tuning tips](https://docs.google.com/document/d/1FVIZfoALXg_ZkYKaYVh-qOlaXveq5CtvJHXkY25eYhs/edit?usp=sharing) for more info.
-
-
-# How to train Franka using orcagym and act?
-1. do teleoperation as usual, get the data
-2. convert the data into the format that act codebase recognize
-```
-python scripts/covert.py
-```
-3. run training as usual using act
-4. To do inference, a folder named other_envs and use_act flag are added to adapt the act codebase to orcagym rollout.
-Before inference, you should train a tiny model using orcagym because some env config are contained there.
-Make sure you are using the version of orcagym that supports act.
-Then run inference as usual using orcagym (the model file you specified won't be used if use_act enabled) and enable use_act flag.
 

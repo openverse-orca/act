@@ -57,7 +57,7 @@ def convert(rbm_file_path, act_dir_path, episode_length, use_frame_stack=False):
                     images_act.create_dataset(camera, data=images[camera])
 
 if __name__ == "__main__":
-    path = ''   # absolute path to orcagym colected data
+    path = '/home/yao/Desktop/OrcaGym/OrcaGym/examples/imitation/records_tmp/merged_250_sr_0d1_no_rotate.hdf5'   # absolute path to orcagym colected data
     path2 = '../datasets/sim_frankapickup/'
     if not os.path.exists(path2):
         os.makedirs(path2)
