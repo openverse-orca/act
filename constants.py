@@ -5,9 +5,10 @@ DATA_DIR = '/home/yao/Desktop/Tasks/0322_frankapickup/act_orca_v2/datasets'
 SIM_TASK_CONFIGS = {
     'sim_frankapickup':{
         'dataset_dir': DATA_DIR + '/sim_frankapickup',
-        'num_episodes': 29,
-        'episode_len': 84,
-        'camera_names': ['camera_primary', 'camera_wrist']
+        'num_episodes':250,
+        'episode_len': 100,
+        # 'camera_names': ['camera_primary', 'camera_wrist']
+        'camera_names': ['camera_primary']
     },
     
     'sim_transfer_cube_scripted':{

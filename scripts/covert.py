@@ -4,7 +4,7 @@ import numpy as np
 import os
 from tqdm import tqdm
 
-def convert(rbm_file_path, act_dir_path, episode_length):
+def convert(rbm_file_path, act_dir_path, episode_length, use_frame_stack=False):
 
     with h5py.File(rbm_file_path) as f_rbm:
         # actions
@@ -25,6 +25,16 @@ def convert(rbm_file_path, act_dir_path, episode_length):
             images = {}
             for camera in ["camera_primary", "camera_wrist"]:
                 images[camera] = f_rbm[f"data/{demo}/obs/{camera}"][:]
+
+            # whether using frame stack
+            if use_frame_stack:
+                # stack with previous frame
+                # for camera in ["camera_primary", "camera_wrist"]:
+                #     tmp = np.concatenate([images[camera][:-1], images[camera][1:]], axis=1)
+                #     images[camera] = tmp
+                # stack with wrist
+                tmp = np.concatenate([images["camera_primary"], images["camera_wrist"]], axis=1)
+                images["camera_primary"] = tmp
 
             # truncate or extend to episode_length with the last element
             if len(actions) > episode_length:
@@ -47,9 +57,8 @@ def convert(rbm_file_path, act_dir_path, episode_length):
                     images_act.create_dataset(camera, data=images[camera])
 
 if __name__ == "__main__":
-    path = '/home/yao/Desktop/OrcaGym/OrcaGym/examples/imitation/records_tmp/Franka_lift_2025-03-25_11-34-51.hdf5'
-    # path2 = '/home/yao/Desktop/Tasks/0322_frankapickup/act_orca_v2/datasets/sim_frankapickup/' + path.split('/')[-1].split('.')[0]
-    path2 = '/home/yao/Desktop/Tasks/0322_frankapickup/act_orca_v2/datasets/sim_frankapickup/'
+    path = ''   # absolute path to orcagym colected data
+    path2 = '../datasets/sim_frankapickup/'
     if not os.path.exists(path2):
         os.makedirs(path2)
-    convert(path, path2, 80)
+    convert(path, path2, 100, use_frame_stack=False)
