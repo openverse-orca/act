@@ -5,7 +5,7 @@ DATA_DIR = '../datasets'
 SIM_TASK_CONFIGS = {
     'sim_frankapickup':{
         'dataset_dir': DATA_DIR + '/sim_frankapickup',
-        'num_episodes':250,
+        'num_episodes':50,
         'episode_len': 100,
         # 'camera_names': ['camera_primary', 'camera_wrist']
         'camera_names': ['camera_primary']
